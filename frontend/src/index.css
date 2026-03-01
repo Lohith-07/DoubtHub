@@ -1,0 +1,215 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 font-body transition-colors duration-500;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Premium Animated Mesh Gradient Background */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background:
+      radial-gradient(at 0% 0%, hsla(253, 16%, 95%, 1) 0, transparent 50%),
+      radial-gradient(at 50% 0%, hsla(225, 39%, 90%, 1) 0, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(339, 49%, 92%, 1) 0, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(253, 16%, 95%, 1) 0, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(225, 39%, 90%, 1) 0, transparent 50%);
+    opacity: 0.8;
+    filter: blur(100px);
+    animation: background-flow 40s ease-in-out infinite alternate;
+  }
+
+  @keyframes background-flow {
+    0% {
+      transform: scale(1) translate(0, 0);
+    }
+    33% {
+      transform: scale(1.1) translate(2%, 3%);
+    }
+    66% {
+      transform: scale(0.9) translate(-1%, 2%);
+    }
+    100% {
+      transform: scale(1.05) translate(1%, -2%);
+    }
+  }
+
+  #root {
+    @apply relative z-10;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white font-body font-semibold text-sm rounded-2xl
+           shadow-lg transition-all duration-300 relative overflow-hidden
+           hover:bg-indigo-700 hover:shadow-indigo-200 hover:-translate-y-1
+           active:translate-y-0.5 active:scale-95
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+  }
+
+  .btn-primary::after {
+    content: "";
+    @apply absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full;
+    transition: transform 0.6s ease;
+  }
+
+  .btn-primary:hover::after {
+    @apply translate-x-full;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-ink-700 font-body font-medium text-sm rounded-xl
+           border border-ink-200 shadow-input transition-all duration-200
+           hover:bg-ink-50 hover:border-ink-300 hover:shadow-card
+           active:bg-ink-100
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-amber {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-500 text-white font-body font-medium text-sm rounded-xl
+           shadow-btn transition-all duration-200
+           hover:bg-amber-600 hover:-translate-y-0.5 hover:shadow-card-hover
+           active:translate-y-0
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+  }
+
+  .btn-sage {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-sage-500 text-white font-body font-medium text-sm rounded-xl
+           shadow-btn transition-all duration-200
+           hover:bg-sage-600 hover:-translate-y-0.5
+           active:translate-y-0
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 bg-white border border-ink-200 rounded-xl text-ink-800 font-body text-sm
+           shadow-input placeholder-ink-400
+           transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-ink-900/20 focus:border-ink-400;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl shadow-card border border-ink-100/60 overflow-hidden;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 cursor-pointer;
+  }
+
+  .badge-pending {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-100 text-amber-700 text-xs font-mono font-medium rounded-full;
+  }
+
+  .badge-answered {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 bg-sage-100 text-sage-700 text-xs font-mono font-medium rounded-full;
+  }
+
+  .label {
+    @apply block text-xs font-medium text-ink-600 uppercase tracking-wider mb-1.5;
+  }
+
+  .page-title {
+    @apply font-display text-2xl md:text-3xl font-semibold text-ink-900;
+  }
+
+  .section-title {
+    @apply font-display text-xl font-semibold text-ink-800;
+  }
+
+  .text-muted {
+    @apply text-sm text-ink-500 font-body;
+  }
+
+  .divider {
+    @apply border-0 border-t border-ink-100 my-6;
+  }
+}
+
+@layer utilities {
+  /* Soft Shadows & Gentle Gradients */
+  .shadow-soft {
+    box-shadow:
+      0 10px 25px -5px rgba(0, 0, 0, 0.05),
+      0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  }
+
+  .shadow-premium {
+    box-shadow:
+      0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  }
+
+  .glass {
+    @apply bg-white/60 backdrop-blur-xl border border-white/40 shadow-premium;
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.4),
+      0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  }
+
+  .glass-dark {
+    @apply bg-slate-900/60 backdrop-blur-2xl border border-white/10 shadow-premium;
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.1),
+      0 10px 25px -5px rgba(0, 0, 0, 0.2);
+  }
+
+  .ease-premium {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .shadow-hover {
+    @apply transition-all duration-500 ease-premium;
+  }
+
+  .shadow-hover:hover {
+    @apply -translate-y-2 shadow-premium;
+  }
+
+  .bg-mesh {
+    background-image:
+      radial-gradient(
+        at 100% 100%,
+        rgba(99, 102, 241, 0.05) 0,
+        transparent 50%
+      ),
+      radial-gradient(at 0% 0%, rgba(168, 85, 247, 0.05) 0, transparent 50%);
+  }
+}
+
+/* Global Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-200 rounded-full hover:bg-gray-300 transition-colors;
+}

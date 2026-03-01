@@ -104,7 +104,7 @@ export default function NotesCard({ note, user, onDelete }) {
               );
             }
 
-            const fileUrl = `http://localhost:5001/api/notes/file/${fileId}`;
+            const fileUrl = `${import.meta.env.VITE_API_BASE_URL}/api/notes/file/${fileId}`
 
             return (
               <a

@@ -37,7 +37,9 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (user && !socket) {
-      const newSocket = io("http://localhost:5001");
+      const newSocket = io(import.meta.env.VITE_SOCKET_URL, {
+  transports: ["websocket"],
+});
       newSocket.emit("join", user._id || user.id);
       setSocket(newSocket);
 

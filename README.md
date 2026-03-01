@@ -1,34 +1,87 @@
-# DoubtHub: Central Doubt Desk
+# 🚀 DoubtHub — Central Doubt Desk
 
-DoubtHub is an intra-college doubt discussion platform designed to streamline communication between students, faculty, and administrators. It provides a real-time, interactive environment for raising and resolving academic queries.
+DoubtHub is a full-stack academic discussion platform designed to centralize doubt resolution, resource sharing, and institutional communication within a college environment.
 
-## Project Structure
+It provides structured doubt management, role-based dashboards, real-time notifications, and secure cloud file storage — deployed in a production-ready cloud architecture.
 
-This project is a full-stack application split into two main components:
+---
 
-- **[backend/](backend/README.md)**: Node.js/Express server and MongoDB database logic.
-- **[frontend/](frontend/README.md)**: React/Vite/Tailwind CSS user interface.
+## 🌍 Live Application
 
-## Key Features
+- **Frontend (Netlify)**: [https://doubt-hub.netlify.app/]
+- **Backend (Render)**: [https://doubthub.onrender.com]
 
-- **Role-Based Access**: Specialized dashboards for Students, Faculty, and Admins.
-- **Real-time Announcements**: Instant push notifications for important updates.
-- **Doubt Lifecycle Management**: Create, search, tag, and resolve academic doubts.
-- **Rich Interaction**: Support for markdown text and file uploads.
-- **Responsive Design**: Modern, glassmorphic UI optimized for all devices.
+---
 
-## Tech Stack Overview
+## 📌 Project Vision
 
-- **Frontend**: React, Vite, Tailwind CSS, Framer Motion, Socket.io-client.
-- **Backend**: Node.js, Express, MongoDB, Mongoose, JWT, Multer, Socket.io.
+DoubtHub aims to replace scattered academic communication systems with a centralized, structured, and scalable platform where:
 
-## Getting Started
+- Students can raise and track doubts
+- Faculty can respond and manage academic discussions
+- Admins can broadcast announcements and monitor activity
+- Notes and study materials are stored securely in the cloud
 
-To get the entire project running locally:
+---
 
-### 1. Backend Setup
+## 🏗️ High-Level Architecture
 
-Navigate to the `backend` directory and follow the instructions in the [backend README](backend/README.md).
+```
+Browser (Client)
+       ↓
+Frontend (React + Vite) — Netlify
+       ↓
+Backend (Node.js + Express) — Render
+       ↓
+MongoDB Atlas (Database + GridFS Storage)
+```
+
+---
+
+## ✨ Core Platform Capabilities
+
+- Role-Based Access Control (Student / Faculty / Admin)
+- Structured Doubt Lifecycle Management
+- Real-Time Announcements & Notifications
+- Cloud-Based Notes Upload & Streaming
+- JWT-Based Authentication
+- Secure API Architecture
+- Responsive Modern UI
+- Production Deployment (Netlify + Render)
+
+---
+
+## 🧩 Project Structure
+
+```
+DoubtHub/
+│
+├── backend/     → API, database models, authentication, real-time logic
+├── frontend/    → UI, routing, state management, API integration
+└── README.md    → Project overview (this file)
+```
+
+Detailed implementation documentation is available in:
+
+- `backend/README.md`
+- `frontend/README.md`
+
+---
+
+## 🔐 Security & Production Design
+
+- Environment variable configuration
+- JWT-based secure authentication
+- Role-based authorization middleware
+- Protected API routes
+- No sensitive credentials committed to repository
+- Separate frontend/backend deployment environments
+
+---
+
+## ⚙️ Local Development
+
+### Backend
 
 ```bash
 cd backend
@@ -36,9 +89,7 @@ npm install
 npm run dev
 ```
 
-### 2. Frontend Setup
-
-Navigate to the `frontend` directory and follow the instructions in the [frontend README](frontend/README.md).
+### Frontend
 
 ```bash
 cd frontend
@@ -46,11 +97,44 @@ npm install
 npm run dev
 ```
 
-## Contributing
+Each module contains its own detailed setup guide.
 
-1. Fork the project.
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`).
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
-4. Push to the Branch (`git push origin feature/AmazingFeature`).
-5. Open a Pull Request.
+---
 
+## 🚀 Deployment Overview
+
+- Backend deployed on Render
+- Frontend deployed on Netlify
+- MongoDB Atlas for cloud database
+- GitHub for version control & CI/CD integration
+
+---
+
+## 📈 Engineering Highlights
+
+- Full-stack cloud deployment
+- Real-time bidirectional communication
+- Modular architecture
+- Scalable backend design
+- Clean separation of concerns
+- Production-grade environment configuration
+
+---
+
+## 🔮 Roadmap
+
+- Advanced analytics dashboard
+- AI-powered doubt classification
+- Faculty auto-assignment system
+- Role-based note approval workflow
+- Extended notification tracking
+
+---
+
+## 👨‍💻 Author
+
+**Lohith Burra**  
+B.Tech CSE (Data Science)  
+Full-Stack Developer | Cloud Enthusiast
+
+---

@@ -1,4 +1,3 @@
-const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const User = require("./models/User");
@@ -6,482 +5,338 @@ const Doubt = require("./models/Doubt");
 
 dotenv.config();
 
-const facultyData = [
-  {
-    dept: "CSE",
-    courses: ["Data Structures", "Algorithms", "Operating Systems", "Computer Networks", "DBMS", "Software Engineering", "Artificial Intelligence"]
-  },
-  {
-    dept: "CSM",
-    courses: ["Machine Learning", "Deep Learning", "Data Mining"]
-  },
-  {
-    dept: "IT",
-    courses: ["Cloud Computing", "Network Security", "Distributed Systems"]
-  },
-  {
-    dept: "ECE",
-    courses: ["Digital Signal Processing", "Microprocessors", "Embedded Systems"]
-  },
-  {
-    dept: "EEE",
-    courses: ["Power Systems", "Electrical Machines", "Power Electronics"]
-  },
-  {
-    dept: "CIVIL",
-    courses: ["Structural Analysis", "Geotechnical Engineering", "Environmental Engineering"]
-  },
-  {
-    dept: "MECH",
-    courses: ["Thermodynamics", "Heat Transfer", "Robotics"]
-  }
-];
+/* --------------------------------
+DEPARTMENTS + SUBJECTS + FACULTY
+-------------------------------- */
 
-const realisticDoubts = [
-  // --- CSE (Computer Science & Engineering) ---
-  {
-    title: "How does the time complexity of QuickSort change in the worst-case scenario?",
-    description: "I understand that QuickSort is O(n log n) on average, but what specific input triggers O(n^2)? Does the pivot selection strategy completely eliminate this risk?",
-    subject: "Algorithms",
-    dept: "CSE"
-  },
-  {
-    title: "What is the difference between a Process and a Thread in modern Operating Systems?",
-    description: "I am confused about memory sharing. Do threads share the heap or the stack? How does the OS handle context switching differently for them?",
-    subject: "Operating Systems",
-    dept: "CSE"
-  },
-  {
-    title: "How do I implement a B+ Tree for database indexing?",
-    description: "I'm looking for a clear explanation of how insertion works when a leaf node is full. How is the pointer structure maintained?",
-    subject: "DBMS",
-    dept: "CSE"
-  },
-  {
-    title: "What is the role of a 'Pointer' in memory management in C++?",
-    description: "How does manual memory management with new/delete compare to smart pointers? Which one is safer for large-scale applications?",
-    subject: "Data Structures",
-    dept: "CSE"
-  },
-  {
-    title: "What are the common lifecycle phases in the SDLC?",
-    description: "Can someone explain the difference between the Waterfall and Agile models with respect to testing and client feedback?",
-    subject: "Software Engineering",
-    dept: "CSE"
-  },
-  {
-    title: "How does the TCP 3-way handshake ensure reliable connection?",
-    description: "What happens if the final ACK is lost? Does the server keep the connection half-open forever?",
-    subject: "Computer Networks",
-    dept: "CSE"
-  },
-  {
-    title: "What is the difference between supervised and unsupervised learning?",
-    description: "I understand that supervision needs labeled data, but how does the algorithm learn patterns in unsupervised learning?",
-    subject: "Artificial Intelligence",
-    dept: "CSE"
-  },
+const departments = {
 
-  // --- CSM (Machine Learning/AI Specialization) ---
-  {
-    title: "When should I prefer ReLU over Sigmoid or Tanh in Deep Learning?",
-    description: "Are there specific types of layers where Sigmoid is still relevant, or is ReLU always the better choice for hidden layers?",
-    subject: "Deep Learning",
-    dept: "CSM"
-  },
-  {
-    title: "How does backpropagation actually update weights in a neural network?",
-    description: "I'm struggling with the chain rule application during the gradient descent step. Can someone explain the mathematical flow?",
-    subject: "Machine Learning",
-    dept: "CSM"
-  },
-  {
-    title: "What is the difference between K-Means and Hierarchical clustering?",
-    description: "If I don't know the number of clusters (K) beforehand, is Hierarchical clustering always better than K-Means?",
-    subject: "Data Mining",
-    dept: "CSM"
-  },
-  {
-    title: "How does Dropout help in preventing overfitting?",
-    description: "If we randomly deactivate neurons during training, doesn't that make the model's predictions inconsistent during testing?",
-    subject: "Deep Learning",
-    dept: "CSM"
-  },
-  {
-    title: "What are the different types of Gradient Descent?",
-    description: "Can someone explain the trade-offs between Batch, Stochastic, and Mini-batch gradient descent in terms of convergence speed?",
-    subject: "Machine Learning",
-    dept: "CSM"
-  },
-  {
-    title: "What is the Curse of Dimensionality in Data Mining?",
-    description: "How does having too many features affect the performance of a model? Does PCA always solve this issue?",
-    subject: "Data Mining",
-    dept: "CSM"
-  },
-  {
-    title: "How does a CNN handle spatial invariance?",
-    description: "I understand convolution layers extract features, but how does the network know if an object is at the top left vs bottom right?",
-    subject: "Deep Learning",
-    dept: "CSM"
-  },
+CSE:{
+subjects:[
+"Programming for Problem Solving","Data Structures","Algorithms","Operating Systems",
+"Computer Networks","Database Management Systems","Software Engineering",
+"Artificial Intelligence","Machine Learning","Compiler Design"
+],
+faculty:[
+"Dr. Sreelatha Malempati","Dr. Chaparala Aparna","Dr. Bhagya Lakshmi Nandipati",
+"Dr. M V Ramana","Mandadi Vasavi","Dr. P Venkateswara Rao",
+"Dr. K Sandeep","Dr. Koteswara Rao"
+]
+},
 
-  // --- IT (Information Technology) ---
-  {
-    title: "What is the Shared Responsibility Model in Cloud Computing?",
-    description: "If I'm using AWS S3, who is responsible for data encryption at rest vs encryption in transit?",
-    subject: "Cloud Computing",
-    dept: "IT"
-  },
-  {
-    title: "Explain the difference between Symmetric and Asymmetric encryption.",
-    description: "Why is Asymmetric encryption used for key exchange if Symmetric encryption is faster?",
-    subject: "Network Security",
-    dept: "IT"
-  },
-  {
-    title: "How does Load Balancing work in Distributed Systems?",
-    description: "What are the common algorithms like Round Robin or Least Connections? How do they handle node failures?",
-    subject: "Distributed Systems",
-    dept: "IT"
-  },
-  {
-    title: "What are the advantages of Docker containers over Virtual Machines?",
-    description: "I keep hearing about resource efficiency, but how exactly does Docker share the host OS kernel?",
-    subject: "Cloud Computing",
-    dept: "IT"
-  },
-  {
-    title: "How does a DDoS attack work at the protocol level?",
-    description: "Is it always just flooding with traffic, or are there more subtle ways like SYN-ACK exhaustion?",
-    subject: "Network Security",
-    dept: "IT"
-  },
-  {
-    title: "What is CAP Theorem in Distributed Databases?",
-    description: "Is it true that we can only have two out of Consistency, Availability, and Partition Tolerance? Can we never have all three?",
-    subject: "Distributed Systems",
-    dept: "IT"
-  },
-  {
-    title: "What is Serverless Architecture?",
-    description: "If there are no servers, where does my code actually execute? How does scaling work automatically?",
-    subject: "Cloud Computing",
-    dept: "IT"
-  },
+IT:{
+subjects:[
+"Cloud Computing","Cyber Security","Web Technologies","Mobile Application Development",
+"Database Systems","Operating Systems","Computer Networks",
+"Big Data Analytics","Distributed Systems","Software Engineering"
+],
+faculty:[
+"Dr. Atuluri Sri Krishna","Naga Padmaja","Kotha Chandana","G Swetha",
+"M V Bhujanga Rao","Dr. Hemantha Kumar","Dr. Murali Krishna","Dr. Lakshmi Narayana"
+]
+},
 
-  // --- ECE (Electronics & Communication) ---
-  {
-    title: "What is Aliasing in Digital Signal Processing?",
-    description: "I know the Nyquist rate, but what physically happens to the signals when the sampling rate is too low?",
-    subject: "Digital Signal Processing",
-    dept: "ECE"
-  },
-  {
-    title: "What are the different modes of 8086 Microprocessor?",
-    description: "Can someone explain the difference between Minimum mode and Maximum mode? When do we use each?",
-    subject: "Microprocessors",
-    dept: "ECE"
-  },
-  {
-    title: "What is the difference between a Microprocessor and a Microcontroller?",
-    description: "If I'm building a simple microwave controller, which one should I use and why?",
-    subject: "Embedded Systems",
-    dept: "ECE"
-  },
-  {
-    title: "How does FFT reduce computation time compared to DFT?",
-    description: "Is it just about using symmetry properties, or is there a deeper mathematical trick involved?",
-    subject: "Digital Signal Processing",
-    dept: "ECE"
-  },
-  {
-    title: "What is the purpose of Interrupts in 8051?",
-    description: "How does the microcontroller know where to resume code after the ISR is finished? What is the stack's role?",
-    subject: "Microprocessors",
-    dept: "ECE"
-  },
-  {
-    title: "Why is RTOS used in Embedded Systems instead of normal OS?",
-    description: "What is deterministic behavior, and why is it critical for systems like airbag deployment?",
-    subject: "Embedded Systems",
-    dept: "ECE"
-  },
-  {
-    title: "Explain the Z-transform in Signal Processing.",
-    description: "How is it related to the Laplace transform? Why do we use Z-domain for discrete signals?",
-    subject: "Digital Signal Processing",
-    dept: "ECE"
-  },
+CSM:{
+subjects:[
+"Machine Learning","Deep Learning","Neural Networks","Data Mining",
+"Natural Language Processing","Computer Vision","Reinforcement Learning",
+"Pattern Recognition","Statistical Learning","Big Data Analytics"
+],
+faculty:[
+"Dr. Gatram Rama Mohan Babu","Dr. N Venkateswara Rao","Dr. Seli Mohapatra",
+"Dr. Sudheer Kumar","Dr. Krishna Mohan","Dr. Prasanna Anjaneyulu",
+"Dr. Gouthami Priya","Dr. Vijayalakshmi"
+]
+},
 
-  // --- EEE (Electrical & Electronics) ---
-  {
-    title: "What is the difference between a Step-up and Step-down Transformer?",
-    description: "I know the voltage changes, but what happens to the power? Does it stay constantoretically?",
-    subject: "Electrical Machines",
-    dept: "EEE"
-  },
-  {
-    title: "How does a Power System maintain frequency stability?",
-    description: "What happens if there is a sudden increase in load? Does the generator speed up or slow down immediately?",
-    subject: "Power Systems",
-    dept: "EEE"
-  },
-  {
-    title: "What are the common Power Electronics converters?",
-    description: "When should I use a Buck converter vs a Boost converter? How does the duty cycle control the output?",
-    subject: "Power Electronics",
-    dept: "EEE"
-  },
-  {
-    title: "Explain the working principle of a 3-Phase Induction Motor.",
-    description: "Why doesn't the rotor rotate at the same speed as the magnetic field (Slip)? What happens at synchronous speed?",
-    subject: "Electrical Machines",
-    dept: "EEE"
-  },
-  {
-    title: "What is the role of Overcurrent Relays in protection?",
-    description: "How do we coordinate different relays to ensure only the faulty section is isolated?",
-    subject: "Power Systems",
-    dept: "EEE"
-  },
-  {
-    title: "How does PWM control the speed of a DC motor?",
-    description: "Is it just averaging the voltage, or is there some effect on the motor's torque during the pulses?",
-    subject: "Power Electronics",
-    dept: "EEE"
-  },
-  {
-    title: "What is the significance of the Load Flow analysis?",
-    description: "Why do we need to know the voltage and phase angles at every bus in the power grid?",
-    subject: "Power Systems",
-    dept: "EEE"
-  },
+CSD:{
+subjects:[
+"Data Science Fundamentals","Data Visualization","Statistical Modelling",
+"Machine Learning","Big Data","Data Engineering","Python for Data Science",
+"Deep Learning","Predictive Analytics","Data Warehousing"
+],
+faculty:[
+"Dr. Popuri Srinivasa Rao","Dr. Riaz Shaik","Dr. R V Kishore Kumar",
+"Dr. V Srinivas Rao","B Manasa","Dr. K Sandeep","Dr. Chandra Sekhar","Dr. Subba Rao"
+]
+},
 
-  // --- CIVIL (Civil Engineering) ---
-  {
-    title: "What are the different types of Beams in Structural Analysis?",
-    description: "Can someone explain the difference between a simply supported beam and a cantilever beam in terms of bending moment?",
-    subject: "Structural Analysis",
-    dept: "CIVIL"
-  },
-  {
-    title: "How is soil compaction measured in Geotechnical Engineering?",
-    description: "What is the Proctor test, and why is there an optimum moisture content for maximum density?",
-    subject: "Geotechnical Engineering",
-    dept: "CIVIL"
-  },
-  {
-    title: "What are the common methods of sewage treatment?",
-    description: "What is the role of aerobic vs anaerobic bacteria in the secondary treatment phase?",
-    subject: "Environmental Engineering",
-    dept: "CIVIL"
-  },
-  {
-    title: "What is the difference between RCC and Pre-stressed concrete?",
-    description: "Why is pre-stressing used for long-span bridges? How does it counteract the expected tension?",
-    subject: "Structural Analysis",
-    dept: "CIVIL"
-  },
-  {
-    title: "How does the water table affect the bearing capacity of soil?",
-    description: "If the water table rises, does the soil become weaker? Why is drainage so important for foundations?",
-    subject: "Geotechnical Engineering",
-    dept: "CIVIL"
-  },
-  {
-    title: "What is the BOD (Biochemical Oxygen Demand) in water quality?",
-    description: "Why is high BOD bad for aquatic life? How do we reduce it in industrial wastewater?",
-    subject: "Environmental Engineering",
-    dept: "CIVIL"
-  },
-  {
-    title: "Explain the Moment Distribution Method.",
-    description: "Is it still widely used in the age of computer software (Finite Element Method)? What are its core steps?",
-    subject: "Structural Analysis",
-    dept: "CIVIL"
-  },
+ECE:{
+subjects:[
+"Signals and Systems","Analog Communication","Digital Communication",
+"Digital Signal Processing","VLSI Design","Microprocessors",
+"Embedded Systems","Antenna Theory","Wireless Communication","Electronic Devices"
+],
+faculty:[
+"Dr. T Ranga Babu","Dr. P Suresh Kumar","Dr. D Eswara Chaitanya",
+"Dr. S Ramesh Babu","Dr. M V Siva Prasad","Dr. P Siva Prasad",
+"Dr. Padmavathi","Dr. Subba Rao"
+]
+},
 
-  // --- MECH (Mechanical Engineering) ---
-  {
-    title: "What is the Second Law of Thermodynamics?",
-    description: "I understand energy is conserved (First Law), but why can't we convert heat 100% into work?",
-    subject: "Thermodynamics",
-    dept: "MECH"
-  },
-  {
-    title: "Difference between Conduction, Convection, and Radiation.",
-    description: "If I'm standing near a heater but not touching it, is the heat reaching me mostly via convection or radiation?",
-    subject: "Heat Transfer",
-    dept: "MECH"
-  },
-  {
-    title: "What are the different types of Robot Grippers?",
-    description: "When should I use a vacuum gripper vs a mechanical jaw for high-speed assembly?",
-    subject: "Robotics",
-    dept: "MECH"
-  },
-  {
-    title: "Explain the Carnot Cycle and its efficiency.",
-    description: "Why is it considered the theoretical maximum? Can we ever build a machine that follows it perfectly?",
-    subject: "Thermodynamics",
-    dept: "MECH"
-  },
-  {
-    title: "What is the role of Reynolds Number in fluid flow?",
-    description: "How does it help us differentiate between Laminar and Turbulent flow over a surface?",
-    subject: "Heat Transfer",
-    dept: "MECH"
-  },
-  {
-    title: "What is Inverse Kinematics in Robotics?",
-    description: "I know the joint angles give the position, but how do we calculate joint angles if we only have the target position?",
-    subject: "Robotics",
-    dept: "MECH"
-  },
-  {
-    title: "What is the difference between an Otto cycle and a Diesel cycle?",
-    description: "Why does the Diesel engine not need a spark plug? How does compression ratio affect them differently?",
-    subject: "Thermodynamics",
-    dept: "MECH"
-  },
-  {
-    title: "What is Forced Convection vs Natural Convection?",
-    description: "How does adding a fan (Forced) change the heat transfer coefficient compared to relying on temperature differences?",
-    subject: "Heat Transfer",
-    dept: "MECH"
-  }
-];
+EEE:{
+subjects:[
+"Electrical Machines","Power Systems","Power Electronics","Control Systems",
+"Renewable Energy Systems","Smart Grid","Network Analysis","Electrical Drives",
+"Instrumentation","High Voltage Engineering"
+],
+faculty:[
+"Dr. K Venkata Rao","Dr. B Suresh","Dr. N Raghavendra",
+"Dr. P Srinivasa Rao","K Jyothi","Dr. M Prasad",
+"Dr. Satyanarayana","Dr. Krishna Veni"
+]
+},
 
-const teluguNames = [
-  "Dr. Rajeshwar Rao", "Prof. Lakshmi Narayana", "Dr. Sreenivasulu Reddy",
-  "Prof. Murali Krishna", "Dr. Anjali Devi", "Prof. Satyanarayana",
-  "Dr. Padmavathi", "Prof. Ramana Murthy", "Dr. Subba Rao",
-  "Prof. Vani Prasad", "Dr. Koteswara Rao", "Prof. Bhaskar Reddy",
-  "Dr. Saraswathi", "Prof. Chandra Shekar", "Dr. Madhusudhan Rao",
-  "Prof. Krishna Veni", "Dr. Raghava Raju", "Prof. Srinivas Rao",
-  "Dr. Vijayalakshmi", "Prof. Chalapathi Rao", "Dr. Gouthami Priya"
-];
+MECH:{
+subjects:[
+"Engineering Mechanics","Thermodynamics","Fluid Mechanics","Heat Transfer",
+"Machine Design","Manufacturing Technology","Robotics","CAD CAM",
+"Industrial Engineering","Strength of Materials"
+],
+faculty:[
+"Dr. B Sreenivasulu","Dr. M Rama Rao","Dr. K Srinivasa Rao",
+"Dr. P Subba Rao","P Ravi Kumar","Dr. K Ravindra",
+"Dr. Murali Krishna","Dr. Satyanarayana"
+]
+},
 
-const seedFaculty = async () => {
-  console.log("🚀 Seeding Faculty (Goal: 21 total with Telugu names)...");
-  const createdFaculty = [];
-  let nameIndex = 0;
+CIVIL:{
+subjects:[
+"Structural Analysis","Geotechnical Engineering","Environmental Engineering",
+"Surveying","Transportation Engineering","Water Resources Engineering",
+"Concrete Technology","Construction Planning","Building Materials","Engineering Mechanics"
+],
+faculty:[
+"Dr. K Rama Mohan Rao","M Srikanth Kumar","S V Satyanarayana",
+"Y Madhavi","Dr. P Siva Kumar","Dr. B Krishna",
+"Dr. Anjali Devi","Dr. Chalapathi Rao"
+]
+},
 
-  for (const item of facultyData) {
-    const facultyCount = 3;
+CHE:{
+subjects:[
+"Chemical Process Calculations","Fluid Flow Operations","Heat Transfer",
+"Mass Transfer","Chemical Reaction Engineering","Process Control",
+"Plant Design","Polymer Technology","Petroleum Refining","Biochemical Engineering"
+],
+faculty:[
+"Dr. K Venkata Subba Rao","Dr. P Ramesh Babu","Dr. M Ravi Kumar",
+"Dr. T Siva Kumar","B Lakshmi","Dr. V Raghuram",
+"Dr. Murali Krishna","Dr. Padmavathi"
+]
+},
 
-    for (let i = 1; i <= facultyCount; i++) {
-      const name = teluguNames[nameIndex++] || `Prof. ${item.dept} Expert ${i}`;
-      const email = `${name.toLowerCase().replace(/dr. /g, "").replace(/prof. /g, "").replace(/ /g, ".")}@doubthub.com`;
+AIML:{
+subjects:[
+"Machine Learning","Deep Learning","Computer Vision",
+"Natural Language Processing","Reinforcement Learning","AI Ethics",
+"Pattern Recognition","Big Data Analytics","Statistical Learning","Data Mining"
+],
+faculty:[
+"Dr. Gatram Rama Mohan Babu","Dr. N Venkateswara Rao",
+"Dr. Seli Mohapatra","Dr. Sudheer Kumar",
+"Dr. Krishna Mohan","Dr. Prasanna Anjaneyulu",
+"Dr. Vijayalakshmi","Dr. Srinivas Rao"
+]
+}
 
-      let existing = await User.findOne({ email });
-      if (!existing) {
-        const totalCourses = item.courses.length;
-        const perFaculty = Math.ceil(totalCourses / facultyCount);
-        const assignedCourses = item.courses.slice((i - 1) * perFaculty, i * perFaculty);
-        const finalCourses = assignedCourses.length > 0 ? assignedCourses : item.courses;
-
-        const faculty = await User.create({
-          name,
-          email,
-          password: "faculty123",
-          role: "faculty",
-          department: item.dept,
-          courses: finalCourses,
-          approved: true,
-          facultyId: `FAC${item.dept}${i}${Math.floor(100 + Math.random() * 900)}`
-        });
-        createdFaculty.push(faculty);
-      } else {
-        createdFaculty.push(existing);
-      }
-    }
-  }
-  return createdFaculty;
 };
 
+/* --------------------------------
+STUDENT NAMES
+-------------------------------- */
 
-const seedDoubts = async (facultyList) => {
-  console.log(`🚀 Seeding Doubts (Found ${realisticDoubts.length} templates)...`);
+const studentNames=[
+"Sai Kiran","Ravi Teja","Praneeth Kumar","Naveen Reddy",
+"Sai Charan","Akash Kumar","Vamsi Krishna","Chaitanya",
+"Srikanth","Sandeep Kumar","Manoj Kumar","Prudhvi",
+"Mahesh Babu","Sai Ram","Dinesh Kumar","Varun Teja"
+];
 
-  let student = await User.findOne({ role: "student" });
-  if (!student) {
-    console.log("⚠️ No student found. Creating Seed Student...");
-    student = await User.create({
-      name: "Seed Student",
-      email: "student.seed@doubthub.com",
-      password: "student123",
-      role: "student",
-      department: "CSE",
-      semester: 4,
-      approved: true
-    });
-  }
+/* --------------------------------
+DOUBT QUESTIONS
+-------------------------------- */
 
-  let count = 0;
-  for (const doubtData of realisticDoubts) {
-    // Find matching faculty (same department + taught course)
-    const eligibleFaculty = facultyList.filter(f =>
-      f.department === doubtData.dept && f.courses.includes(doubtData.subject)
-    );
+const doubts=[
+"Explain with example",
+"Why is this concept important?",
+"Explain step by step",
+"What are real world applications?",
+"Difference between two approaches?"
+];
 
-    // If no specific course match, find any faculty in that department as backup
-    const backupFaculty = eligibleFaculty.length > 0 ? eligibleFaculty : facultyList.filter(f => f.department === doubtData.dept);
+/* --------------------------------
+FACULTY SEEDER
+-------------------------------- */
 
-    if (backupFaculty.length === 0) {
-      console.log(`❌ No faculty found for ${doubtData.dept} - ${doubtData.subject}`);
-      continue;
-    }
+const seedFaculty = async()=>{
 
-    const assignedTo = backupFaculty[Math.floor(Math.random() * backupFaculty.length)];
+const facultyList=[];
 
-    // Check for duplicates before inserting
-    const existingDoubt = await Doubt.findOne({
-      title: doubtData.title,
-      postedBy: student._id
-    });
+for(const dept in departments){
 
-    if (!existingDoubt) {
-      const status = Math.random() > 0.4 ? "answered" : "pending"; // 60% answered
-      const answer = status === "answered" ?
-        `Great question on ${doubtData.subject}! Regarding ${doubtData.title.split('?')[0]}, you should consider that the fundamental principle involves analyzing the system state at specific intervals. For a more detailed breakdown, please refer to chapter 5 of our textbook or visit the documentation for this specific module.` :
-        null;
+let index=0;
 
-      await Doubt.create({
-        ...doubtData,
-        department: doubtData.dept,
-        postedBy: student._id,
-        assignedTo: assignedTo._id,
-        status,
-        answer,
-        answeredBy: status === "answered" ? assignedTo._id : null,
-        tags: [doubtData.dept, doubtData.subject.replace(/ /g, "")],
-        upvoteCount: Math.floor(Math.random() * 25),
-        createdAt: new Date(Date.now() - Math.floor(Math.random() * 86400000 * 7)) // Random time in last 7 days
-      });
-      count++;
-    }
-  }
-  console.log(`✅ Seeded ${count} new doubts.`);
+for(const name of departments[dept].faculty){
+
+const email=name
+.toLowerCase()
+.replace(/dr. /g,"")
+.replace(/ /g,".")
++`.`+dept.toLowerCase()+`@rvrjc.ac.in`;
+
+const faculty=await User.create({
+
+name,
+email,
+password:"faculty123",
+role:"faculty",
+department:dept,
+courses:departments[dept].subjects.slice(0,3),
+approved:true,
+facultyId:`FAC${dept}${100+index}`
+
+});
+
+facultyList.push(faculty);
+
+index++;
+
+}
+
+}
+
+return facultyList;
+
 };
 
-const runSeeder = async () => {
-  try {
-    await connectDB();
+/* --------------------------------
+STUDENT SEEDER
+-------------------------------- */
 
-    // Safety: Reset specific seed data if needed (optional, here we avoid it as per requirements)
-    // For now we just run and it handles duplicates itself
+const seedStudents = async()=>{
 
-    const facultyList = await seedFaculty();
-    await seedDoubts(facultyList);
+const students=[];
+const deptKeys=Object.keys(departments);
 
-    console.log("🎉 Seeder run complete! Check your database.");
-    process.exit(0);
-  } catch (error) {
-    console.error("❌ Seeding failed:", error.message);
-    process.exit(1);
-  }
+for(let i=0;i<160;i++){
+
+const dept=deptKeys[i%deptKeys.length];
+
+const student=await User.create({
+
+name:studentNames[i%studentNames.length]+" "+(i+1),
+email:`student${i+1}@rvrjc.ac.in`,
+password:"student123",
+role:"student",
+department:dept,
+semester:Math.ceil(Math.random()*8),
+approved:true
+
+});
+
+students.push(student);
+
+}
+
+return students;
+
+};
+
+/* --------------------------------
+DOUBT SEEDER
+-------------------------------- */
+
+const seedDoubts = async(students,faculty)=>{
+
+for(let i=0;i<250;i++){
+
+const student=students[Math.floor(Math.random()*students.length)];
+
+const deptFaculty=faculty.filter(
+f=>f.department===student.department
+);
+
+const assignedTo=
+deptFaculty[Math.floor(Math.random()*deptFaculty.length)];
+
+const subject=
+departments[student.department].subjects[
+Math.floor(Math.random()*10)
+];
+
+const status=Math.random()>0.3?"answered":"pending";
+
+await Doubt.create({
+
+title:doubts[Math.floor(Math.random()*doubts.length)],
+
+description:"Need detailed explanation with examples.",
+
+department:student.department,
+
+subject,
+
+postedBy:student._id,
+
+assignedTo:assignedTo._id,
+
+status,
+
+answer:
+status==="answered"
+?`This topic is part of ${subject}.`
+:null,
+
+answeredBy:status==="answered"?assignedTo._id:null,
+
+tags:[student.department,subject],
+
+upvoteCount:Math.floor(Math.random()*50),
+
+createdAt:new Date(Date.now()-Math.random()*45*24*60*60*1000)
+
+});
+
+}
+
+};
+
+/* --------------------------------
+RUN SEEDER
+-------------------------------- */
+
+const runSeeder = async()=>{
+
+try{
+
+await connectDB();
+
+await User.deleteMany();
+await Doubt.deleteMany();
+
+console.log("Old data cleared");
+
+const faculty=await seedFaculty();
+console.log("Faculty seeded");
+
+const students=await seedStudents();
+console.log("Students seeded");
+
+await seedDoubts(students,faculty);
+console.log("Doubts seeded");
+
+console.log("Seeder completed successfully");
+
+process.exit();
+
+}catch(err){
+
+console.error(err);
+process.exit(1);
+
+}
+
 };
 
 runSeeder();

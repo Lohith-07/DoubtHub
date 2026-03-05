@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
-import { adminAPI } from "../services/api";
+import { adminAPI, doubtAPI } from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
 
 const containerVariants = {
@@ -12,13 +12,17 @@ const containerVariants = {
 };
 
 export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState("users");
   const [pending, setPending] = useState([]);
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
+  const [doubts, setDoubts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
+  const [userPage, setUserPage] = useState(1);
+  const [userPages, setUserPages] = useState(1);
+  const [doubtPage, setDoubtPage] = useState(1);
+  const [doubtPages, setDoubtPages] = useState(1);
   const [roleFilter, setRoleFilter] = useState("all");
   const { user } = useAuth();
   const feedRef = useRef(null);
@@ -26,25 +30,31 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const params = { page, limit: 5 };
+      const userParams = { page: userPage, limit: 5 };
       if (roleFilter !== "all") {
-        params.role = roleFilter;
+        userParams.role = roleFilter;
       }
 
-      const [pendingRes, statsRes, usersRes] = await Promise.all([
+      const doubtParams = { page: doubtPage, limit: 5 };
+
+      const [pendingRes, statsRes, usersRes, doubtsRes] = await Promise.all([
         adminAPI.getPending(),
         adminAPI.getStats(),
-        adminAPI.getAllUsers(params),
+        adminAPI.getAllUsers(userParams),
+        doubtAPI.getAll(doubtParams),
       ]);
 
       setPending(pendingRes.data);
       setStats(statsRes.data);
-      // Defensive: handle both array and object response structures
+
       const usersData = Array.isArray(usersRes.data)
         ? usersRes.data
         : usersRes.data.users || [];
       setUsers(usersData);
-      setPages(usersRes.data.pages || 1);
+      setUserPages(usersRes.data.pages || 1);
+
+      setDoubts(doubtsRes.data.data || []);
+      setDoubtPages(doubtsRes.data.pages || 1);
     } catch (err) {
       setError("Failed to load admin data");
     } finally {
@@ -81,12 +91,25 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteDoubt = async (id) => {
+    if (
+      window.confirm("Are you sure you want to PERMANENTLY delete this doubt?")
+    ) {
+      try {
+        await doubtAPI.delete(id);
+        fetchData();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+  };
+
   useEffect(() => {
     fetchData();
-    if (page > 1) {
+    if (userPage > 1 || doubtPage > 1) {
       feedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, [page, roleFilter]);
+  }, [userPage, doubtPage, roleFilter]);
 
   if (loading)
     return (
@@ -141,165 +164,308 @@ export default function AdminDashboard() {
         animate="visible"
         className="grid grid-cols-2 lg:grid-cols-3 gap-6"
       >
-        <StatCard
-          label="Students"
-          value={stats.totalStudents}
-          icon="👥"
-          color="indigo"
-        />
-        <StatCard
-          label="Faculty"
-          value={stats.totalFaculty}
-          icon="👨‍🏫"
-          color="purple"
-        />
-        <StatCard
-          label="Resolved"
-          value={stats.resolvedDoubts}
-          icon="✅"
-          color="emerald"
-        />
-        <StatCard
-          label="Pending Doubts"
-          value={stats.pendingDoubts}
-          icon="⏳"
-          color="amber"
-        />
-        <StatCard
-          label="Total Doubts"
-          value={stats.totalDoubts}
-          icon="📚"
-          color="indigo"
-        />
-        <StatCard
-          label="Pending Approvals"
-          value={stats.pendingFaculty}
-          icon="🛡️"
-          color="amber"
-        />
+        {stats && (
+          <>
+            <StatCard
+              label="Students"
+              value={stats.totalStudents}
+              icon="👥"
+              color="indigo"
+            />
+            <StatCard
+              label="Faculty"
+              value={stats.totalFaculty}
+              icon="👨‍🏫"
+              color="purple"
+            />
+            <StatCard
+              label="Resolved"
+              value={stats.resolvedDoubts}
+              icon="✅"
+              color="emerald"
+            />
+            <StatCard
+              label="Pending Doubts"
+              value={stats.pendingDoubts}
+              icon="⏳"
+              color="amber"
+            />
+            <StatCard
+              label="Total Doubts"
+              value={stats.totalDoubts}
+              icon="📚"
+              color="indigo"
+            />
+            <StatCard
+              label="Pending Approvals"
+              value={stats.pendingFaculty}
+              icon="🛡️"
+              color="amber"
+            />
+          </>
+        )}
       </motion.div>
 
-      {/* USER MANAGEMENT SECTION */}
-      <div
-        ref={feedRef}
-        className="glass rounded-[2rem] shadow-premium p-8 md:p-12 border-white/40"
-      >
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-          <h2 className="text-2xl font-display font-bold text-gray-900 tracking-tight">
-            User Directory
-          </h2>
-          <div className="flex glass p-1 rounded-2xl border-white/40">
-            {["all", "student", "faculty"].map((role) => (
-              <button
-                key={role}
-                onClick={() => {
-                  setRoleFilter(role);
-                  setPage(1);
-                }}
-                className={`px-6 py-2 text-[11px] font-bold uppercase tracking-widest rounded-xl transition-all duration-300 ${
-                  roleFilter === role
-                    ? "bg-indigo-600 text-white shadow-lg"
-                    : "text-gray-500 hover:text-gray-800"
-                }`}
-              >
-                {role}s
-              </button>
-            ))}
-          </div>
-          <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-3 py-2 rounded-xl border border-indigo-100 uppercase tracking-tighter">
-            Total {(users || []).length}
-          </span>
-        </div>
-
-        {!users || users.length === 0 ? (
-          <p className="text-center py-10 text-gray-500 italic">
-            No users found
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="py-4 px-2 text-xs font-bold uppercase tracking-wider text-gray-400">
-                    User
-                  </th>
-                  <th className="py-4 px-2 text-xs font-bold uppercase tracking-wider text-gray-400">
-                    Role
-                  </th>
-                  <th className="py-4 px-2 text-xs font-bold uppercase tracking-wider text-gray-400">
-                    Dept
-                  </th>
-                  <th className="py-4 px-2 text-xs font-bold uppercase tracking-wider text-gray-400 text-right">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {users.map((u) => (
-                  <tr
-                    key={u._id}
-                    className="group hover:bg-gray-50/50 transition-colors"
-                  >
-                    <td className="py-4 px-2">
-                      <div className="font-semibold text-gray-900 leading-none mb-1">
-                        {u.name}
-                      </div>
-                      <div className="text-xs text-gray-500">{u.email}</div>
-                    </td>
-                    <td className="py-4 px-2">
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-tight px-2 py-0.5 rounded-md ${
-                          u.role === "faculty"
-                            ? "bg-purple-100 text-purple-700"
-                            : "bg-blue-100 text-blue-700"
-                        }`}
-                      >
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="py-4 px-2 text-sm text-gray-600 font-medium">
-                      {u.department}
-                    </td>
-                    <td className="py-4 px-2 text-right">
-                      <button
-                        onClick={() => handleDeleteUser(u._id)}
-                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                        title="Delete User"
-                      >
-                        🗑️
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* 🔥 ADMIN PAGINATION */}
-        {pages > 1 && (
-          <div className="flex justify-center items-center gap-6 mt-8 pt-6 border-t border-gray-100">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage((prev) => prev - 1)}
-              className="px-5 py-2 rounded-xl border border-gray-200 text-xs font-semibold disabled:opacity-40 hover:bg-gray-50 transition-all shadow-sm"
-            >
-              Prev
-            </button>
-            <span className="text-xs text-gray-500 font-medium tracking-tight">
-              Page <span className="font-bold text-gray-900">{page}</span> of{" "}
-              {pages}
-            </span>
-            <button
-              disabled={page === pages}
-              onClick={() => setPage((prev) => prev + 1)}
-              className="px-5 py-2 rounded-xl border border-gray-200 text-xs font-semibold disabled:opacity-40 hover:bg-gray-50 transition-all shadow-sm"
-            >
-              Next
-            </button>
-          </div>
-        )}
+      {/* TABS NAVIGATION */}
+      <div className="flex glass p-1.5 rounded-2xl border-white/40 max-w-fit mx-auto md:mx-0">
+        <button
+          onClick={() => setActiveTab("users")}
+          className={`px-8 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all duration-300 ${
+            activeTab === "users"
+              ? "bg-indigo-600 text-white shadow-lg"
+              : "text-gray-500 hover:text-gray-800"
+          }`}
+        >
+          User Management
+        </button>
+        <button
+          onClick={() => setActiveTab("doubts")}
+          className={`px-8 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all duration-300 ${
+            activeTab === "doubts"
+              ? "bg-indigo-600 text-white shadow-lg"
+              : "text-gray-500 hover:text-gray-800"
+          }`}
+        >
+          Doubt Management
+        </button>
       </div>
+
+      <AnimatePresence mode="wait">
+        {activeTab === "users" ? (
+          <motion.div
+            key="users-section"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
+            ref={feedRef}
+            className="glass rounded-[2rem] shadow-premium p-8 md:p-12 border-white/40"
+          >
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+              <h2 className="text-2xl font-display font-bold text-gray-900 tracking-tight">
+                User Directory
+              </h2>
+              <div className="flex glass p-1 rounded-2xl border-white/40">
+                {["all", "student", "faculty"].map((role) => (
+                  <button
+                    key={role}
+                    onClick={() => {
+                      setRoleFilter(role);
+                      setUserPage(1);
+                    }}
+                    className={`px-6 py-2 text-[11px] font-bold uppercase tracking-widest rounded-xl transition-all duration-300 ${
+                      roleFilter === role
+                        ? "bg-indigo-600 text-white shadow-lg"
+                        : "text-gray-500 hover:text-gray-800"
+                    }`}
+                  >
+                    {role}s
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {!users || users.length === 0 ? (
+              <p className="text-center py-10 text-gray-500 italic">
+                No users found
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="py-4 px-2 text-xs font-bold uppercase tracking-wider text-gray-400">
+                        User
+                      </th>
+                      <th className="py-4 px-2 text-xs font-bold uppercase tracking-wider text-gray-400">
+                        Role
+                      </th>
+                      <th className="py-4 px-2 text-xs font-bold uppercase tracking-wider text-gray-400">
+                        Dept
+                      </th>
+                      <th className="py-4 px-2 text-xs font-bold uppercase tracking-wider text-gray-400 text-right">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {users.map((u) => (
+                      <tr
+                        key={u._id}
+                        className="group hover:bg-gray-50/50 transition-colors"
+                      >
+                        <td className="py-4 px-2">
+                          <div className="font-semibold text-gray-900 leading-none mb-1">
+                            {u.name}
+                          </div>
+                          <div className="text-xs text-gray-500">{u.email}</div>
+                        </td>
+                        <td className="py-4 px-2">
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-tight px-2 py-0.5 rounded-md ${
+                              u.role === "faculty"
+                                ? "bg-purple-100 text-purple-700"
+                                : "bg-blue-100 text-blue-700"
+                            }`}
+                          >
+                            {u.role}
+                          </span>
+                        </td>
+                        <td className="py-4 px-2 text-sm text-gray-600 font-medium">
+                          {u.department}
+                        </td>
+                        <td className="py-4 px-2 text-right">
+                          <button
+                            onClick={() => handleDeleteUser(u._id)}
+                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            title="Delete User"
+                          >
+                            🗑️
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {userPages > 1 && (
+              <div className="flex justify-center items-center gap-6 mt-8 pt-6 border-t border-gray-100">
+                <button
+                  disabled={userPage === 1}
+                  onClick={() => setUserPage((prev) => prev - 1)}
+                  className="px-5 py-2 rounded-xl border border-gray-200 text-xs font-semibold disabled:opacity-40 hover:bg-gray-50 transition-all shadow-sm"
+                >
+                  Prev
+                </button>
+                <span className="text-xs text-gray-500 font-medium tracking-tight">
+                  Page{" "}
+                  <span className="font-bold text-gray-900">{userPage}</span> of{" "}
+                  {userPages}
+                </span>
+                <button
+                  disabled={userPage === userPages}
+                  onClick={() => setUserPage((prev) => prev + 1)}
+                  className="px-5 py-2 rounded-xl border border-gray-200 text-xs font-semibold disabled:opacity-40 hover:bg-gray-50 transition-all shadow-sm"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="doubts-section"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+            ref={feedRef}
+            className="glass rounded-[2rem] shadow-premium p-8 md:p-12 border-white/40"
+          >
+            <div className="flex justify-between items-center mb-10">
+              <h2 className="text-2xl font-display font-bold text-gray-900 tracking-tight">
+                Global Doubts
+              </h2>
+            </div>
+
+            {!doubts || doubts.length === 0 ? (
+              <p className="text-center py-10 text-gray-500 italic">
+                No doubts found
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="py-4 px-2 text-xs font-bold uppercase tracking-wider text-gray-400">
+                        Title
+                      </th>
+                      <th className="py-4 px-2 text-xs font-bold uppercase tracking-wider text-gray-400">
+                        Subject
+                      </th>
+                      <th className="py-4 px-2 text-xs font-bold uppercase tracking-wider text-gray-400">
+                        Status
+                      </th>
+                      <th className="py-4 px-2 text-xs font-bold uppercase tracking-wider text-gray-400 text-right">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {doubts.map((d) => (
+                      <tr
+                        key={d._id}
+                        className="group hover:bg-gray-50/50 transition-colors"
+                      >
+                        <td className="py-4 px-2 max-w-xs">
+                          <div className="font-semibold text-gray-900 truncate">
+                            {d.title}
+                          </div>
+                          <div className="text-[10px] text-gray-400 flex items-center gap-1 mt-1">
+                            <span>Posted by</span>
+                            <span className="font-medium text-indigo-500">
+                              {d.postedBy?.name || "Unknown"}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-2 text-sm text-gray-600 font-medium">
+                          {d.subject}
+                        </td>
+                        <td className="py-4 px-2">
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-tight px-2 py-0.5 rounded-md ${
+                              d.status === "answered"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-amber-100 text-amber-700"
+                            }`}
+                          >
+                            {d.status}
+                          </span>
+                        </td>
+                        <td className="py-4 px-2 text-right">
+                          <button
+                            onClick={() => handleDeleteDoubt(d._id)}
+                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            title="Delete Doubt"
+                          >
+                            🗑️
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {doubtPages > 1 && (
+              <div className="flex justify-center items-center gap-6 mt-8 pt-6 border-t border-gray-100">
+                <button
+                  disabled={doubtPage === 1}
+                  onClick={() => setDoubtPage((prev) => prev - 1)}
+                  className="px-5 py-2 rounded-xl border border-gray-200 text-xs font-semibold disabled:opacity-40 hover:bg-gray-50 transition-all shadow-sm"
+                >
+                  Prev
+                </button>
+                <span className="text-xs text-gray-500 font-medium tracking-tight">
+                  Page{" "}
+                  <span className="font-bold text-gray-900">{doubtPage}</span>{" "}
+                  of {doubtPages}
+                </span>
+                <button
+                  disabled={doubtPage === doubtPages}
+                  onClick={() => setDoubtPage((prev) => prev + 1)}
+                  className="px-5 py-2 rounded-xl border border-gray-200 text-xs font-semibold disabled:opacity-40 hover:bg-gray-50 transition-all shadow-sm"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* PENDING SECTION */}
 
